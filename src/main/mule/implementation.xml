@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<flow name="listInventory" doc:id="e4a61b5d-7806-4dcf-943a-684a3264b895" >
+		<db:select doc:name="List Inventory" doc:id="bf1dc500-9ddd-44b9-849c-dd7a95457468" config-ref="Heroku_Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM public."INVENTORY"
+WHERE (CAST(:productCode AS INTEGER) IS NULL OR "productCode" = :productCode)
+AND (CAST(:size AS VARCHAR) IS NULL OR "size" = :size)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	productCode: message.attributes.queryParams.productCode,
+	size: message.attributes.queryParams.size
+}]]]></db:input-parameters>
+		</db:select>
+		<validation:is-not-empty-collection doc:name="Is not empty collection" doc:id="6ef02017-9953-453f-9508-99ac881f9cf2" config-ref="Validation_Config" message="Inventory is empty!">
+			<error-mapping sourceType="VALIDATION:EMPTY_COLLECTION" targetType="APP:NOT_FOUND" />
+		</validation:is-not-empty-collection>
+		<ee:transform doc:name="Java to JSON" doc:id="9d4966a2-a3b5-432b-9d35-7c7a7c99fdf9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+(payload orderBy(item) -> item.productCode) map(value, index) -> {
+	"productCode": value.productCode,
+	"productPrice": value.productPrice,
+	"productSize": value.size,
+	"description": value.description,
+	"count": value.count,
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

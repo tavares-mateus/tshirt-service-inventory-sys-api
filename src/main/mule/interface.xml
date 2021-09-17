@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
-    <http:listener-config name="t-shirt-service-inventory-system-httpListenerConfig">
-        <http:listener-connection host="0.0.0.0" port="8081" />
-    </http:listener-config>
-    <apikit:config name="t-shirt-service-inventory-system-config" api="resource::f36a6db6-b129-4fa3-9f09-674196c546bf:t-shirt-service-inventory-system-api:1.0.0:raml:zip:t-shirt-service-inventory-system.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    <apikit:config name="t-shirt-service-inventory-system-config" api="resource::f36a6db6-b129-4fa3-9f09-674196c546bf:t-shirt-service-inventory-system-api:1.0.1:raml:zip:t-shirt-service-inventory-system.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <flow name="t-shirt-service-inventory-system-main">
-        <http:listener config-ref="t-shirt-service-inventory-system-httpListenerConfig" path="/api/*">
+        <http:listener path="/api/*" config-ref="HTTP_Listener_config" allowedMethods="GET">
             <http:response statusCode="#[vars.httpStatus default 200]">
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:response>
             <http:error-response statusCode="#[vars.httpStatus default 500]">
-                <http:body>#[payload]</http:body>
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:error-response>
         </http:listener>
         <apikit:router config-ref="t-shirt-service-inventory-system-config" />
@@ -94,16 +92,29 @@ output application/json
                     </ee:variables>
                 </ee:transform>
             </on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="42a34601-100d-40c5-8948-6be6bae98f94" type="APP:NOT_FOUND" >
+				<ee:transform doc:name="Transform Message" doc:id="83813af3-0649-4a2f-8939-4185f77b9d4c" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"errorMessage": error.description]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpStatus" ><![CDATA[501]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
         </error-handler>
     </flow>
     <flow name="t-shirt-service-inventory-system-console">
-        <http:listener config-ref="t-shirt-service-inventory-system-httpListenerConfig" path="/console/*">
+        <http:listener path="/console/*" config-ref="HTTP_Listener_config">
             <http:response statusCode="#[vars.httpStatus default 200]">
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:response>
             <http:error-response statusCode="#[vars.httpStatus default 500]">
-                <http:body>#[payload]</http:body>
-                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:error-response>
         </http:listener>
         <apikit:console config-ref="t-shirt-service-inventory-system-config" />
@@ -123,16 +134,7 @@ output application/json
             </on-error-propagate>
         </error-handler>
     </flow>
-    <flow name="get:\inventory:application\json:t-shirt-service-inventory-system-config">
-        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  errorMessage: "Bad Request! Please review the data."
-}]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
+    <flow name="get:\inventory:t-shirt-service-inventory-system-config">
+        <flow-ref doc:name="listInventory" doc:id="4e97d1b8-5cd7-48a8-974c-66016dda4c4f" name="listInventory" />
     </flow>
 </mule>
