@@ -10,10 +10,12 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 		<db:select doc:name="List Inventory" doc:id="bf1dc500-9ddd-44b9-849c-dd7a95457468" config-ref="Heroku_Database_Config">
 			<db:sql ><![CDATA[SELECT * FROM public."INVENTORY"
 WHERE (CAST(:productCode AS INTEGER) IS NULL OR "productCode" = :productCode)
-AND (CAST(:size AS VARCHAR) IS NULL OR "size" = :size)]]></db:sql>
+AND (CAST(:size AS VARCHAR) IS NULL OR "size" = :size)
+AND (CAST(:description AS VARCHAR) IS NULL OR "description" = :description)]]></db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	productCode: message.attributes.queryParams.productCode,
-	size: message.attributes.queryParams.size
+	size: message.attributes.queryParams.size,
+	description: message.attributes.queryParams.description
 }]]]></db:input-parameters>
 		</db:select>
 		<validation:is-not-empty-collection doc:name="Is not empty collection" doc:id="6ef02017-9953-453f-9508-99ac881f9cf2" config-ref="Validation_Config" message="Inventory is empty!">
