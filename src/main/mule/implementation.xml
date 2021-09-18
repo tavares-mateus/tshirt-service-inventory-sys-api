@@ -29,7 +29,7 @@ output application/json
 (payload orderBy(item) -> item.productCode) map(value, index) -> {
 	"productCode": value.productCode,
 	"productPrice": value.productPrice,
-	"productSize": value.size,
+	"size": value.size,
 	"description": value.description,
 	"count": value.count,
 }]]></ee:set-payload>
